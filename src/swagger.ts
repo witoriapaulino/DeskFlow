@@ -7,6 +7,7 @@ export function criarDocumentoOpenApi(app: INestApplication): OpenAPIObject {
     .setTitle('DeskFlow API')
     .setDescription('Central de Serviços de TI — Projeto Integrador de Gerência de Configuração (Fametro)')
     .setVersion(process.env.npm_package_version ?? '0.0.0')
+    .addBearerAuth()
     .build();
   return SwaggerModule.createDocument(app, config);
 }

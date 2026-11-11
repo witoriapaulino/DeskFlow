@@ -1,17 +1,24 @@
 import { Body, Controller, Get, Param, ParseIntPipe, Post, Query } from '@nestjs/common';
-import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { Perfis, UsuarioAtual, UsuarioAutenticado } from '../auth/decorators';
 import { ConhecimentoService } from './conhecimento.service';
 import { RegistrarSolucaoDto } from './dto/registrar-solucao.dto';
 
 @ApiTags('Solução e Base de Conhecimento')
+@ApiBearerAuth()
 @Controller()
 export class ConhecimentoController {
   constructor(private readonly service: ConhecimentoService) {}
 
   @Post('chamados/:id/solucao')
-  @ApiOperation({ summary: 'RF04 — Registrar solução e resolver o chamado' })
-  registrarSolucao(@Param('id', ParseIntPipe) id: number, @Body() dto: RegistrarSolucaoDto) {
-    return this.service.registrarSolucao(id, dto);
+  @Perfis('TECNICO')
+  @ApiOperation({ summary: 'RF04 — Registrar solução e resolver o chamado (técnico atribuído)' })
+  registrarSolucao(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: RegistrarSolucaoDto,
+    @UsuarioAtual() usuario: UsuarioAutenticado,
+  ) {
+    return this.service.registrarSolucao(id, dto, usuario.id);
   }
 
   @Get('base-conhecimento')

@@ -86,3 +86,21 @@ PostgreSQL com Docker:
 ```bash
 docker run -d --name deskflow-db -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=deskflow -p 5432:5432 postgres:16
 ```
+
+## Testes
+
+| Tipo | Ferramenta | Comando | Precisa de banco? |
+|---|---|---|---|
+| Unitários | Jest | `npm run test:unit` | Não |
+| Integração | Jest + Supertest | `npm run test:int` | Sim, um banco **só de teste** (os dados são apagados) |
+| E2E | Newman (coleção Postman) | `npm run test:e2e` | Sim, com a API rodando e o seed aplicado |
+
+## Segurança (RF02)
+
+Todas as rotas exigem login (`POST /auth/login` → token JWT no cabeçalho `Authorization: Bearer <token>`), exceto login e autocadastro.
+
+| Perfil | Pode |
+|---|---|
+| USUARIO | abrir, acompanhar e fechar os **próprios** chamados; consultar a base de conhecimento |
+| TECNICO | ver todos os chamados, assumir chamados e registrar soluções |
+| GESTOR | tudo do técnico + atribuir chamados e ver o painel de relatórios |

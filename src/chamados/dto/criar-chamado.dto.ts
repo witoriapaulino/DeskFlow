@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Prioridade } from '../../generated/prisma/client';
-import { IsEnum, IsInt, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsEnum, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class CriarChamadoDto {
   @ApiProperty({ example: 'Impressora do 2º andar não imprime' })
@@ -18,8 +18,4 @@ export class CriarChamadoDto {
   @IsOptional()
   @IsEnum(Prioridade)
   prioridade?: Prioridade;
-
-  @ApiProperty({ example: 1, description: 'Usuário que abre o chamado' })
-  @IsInt()
-  solicitanteId!: number;
 }

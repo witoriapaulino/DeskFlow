@@ -1,6 +1,6 @@
 {
   "name": "deskflow",
-  "version": "0.2.0",
+  "version": "0.5.0",
   "description": "DeskFlow — Central de Serviços de TI (Projeto Integrador de Gerência de Configuração)",
   "private": true,
   "license": "UNLICENSED",
@@ -13,11 +13,17 @@
     "prisma:migrate:dev": "prisma migrate dev",
     "db:seed": "ts-node db/seed.ts",
     "openapi": "ts-node scripts/gerar-openapi.ts",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "test": "jest",
+    "test:unit": "jest tests/unit",
+    "test:int": "jest tests/integration --runInBand",
+    "test:cov": "jest tests/unit --coverage",
+    "test:e2e": "newman run docs/api/postman_collection.json -e tests/e2e/ci.postman_environment.json"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.0",
     "@nestjs/core": "^11.1.0",
+    "@nestjs/jwt": "^11.0.2",
     "@nestjs/platform-express": "^11.1.0",
     "@nestjs/swagger": "^11.2.0",
     "@prisma/adapter-pg": "^7.10.1",
@@ -32,11 +38,18 @@
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.0",
+    "@nestjs/testing": "^11.2.9",
+    "@types/jest": "^29.5.14",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.0.0",
     "@types/pg": "^8.11.10",
+    "@types/supertest": "^6.0.3",
+    "jest": "^29.7.0",
     "js-yaml": "^4.1.0",
+    "newman": "^6.2.3",
     "prisma": "^7.10.1",
+    "supertest": "^7.3.2",
+    "ts-jest": "^29.4.15",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.0"
   }
