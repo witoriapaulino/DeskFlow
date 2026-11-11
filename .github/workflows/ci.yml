@@ -1,0 +1,84 @@
+# IC-CI-01 — Integração contínua do DeskFlow
+# Roda em todo push e em todo Pull Request para a main:
+# build → migrações → testes unitários → testes de integração → API no ar → testes E2E (Newman)
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-e-testes:
+    name: Build, testes e Newman
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: deskflow
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/deskflow?schema=public
+      JWT_SECRET: ci-${{ github.run_id }}
+      PORT: 3000
+
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v4
+
+      - name: Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependências (gera o Prisma Client)
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Contrato OpenAPI está em dia com o código
+        run: |
+          npm run openapi
+          git diff --exit-code docs/api/openapi.yaml || (echo "::error::docs/api/openapi.yaml desatualizado. Rode 'npm run openapi' e commite." && exit 1)
+
+      - name: Aplicar migrações (db/migrations)
+        run: npx prisma migrate deploy
+
+      - name: Testes unitários
+        run: npm run test:unit
+
+      - name: Testes de integração (Supertest + PostgreSQL)
+        run: npm run test:int
+
+      - name: Preparar dados de demonstração
+        run: npm run db:seed
+
+      - name: Subir a API
+        run: |
+          npm start > api.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:3000/docs > /dev/null && echo "API no ar" && exit 0
+            sleep 1
+          done
+          echo "::error::A API não subiu" && cat api.log && exit 1
+
+      - name: Testes E2E (Newman + coleção Postman)
+        run: npm run test:e2e
+
+      - name: Log da API (se falhar)
+        if: failure()
+        run: cat api.log || true
