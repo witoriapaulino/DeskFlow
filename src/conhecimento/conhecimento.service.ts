@@ -11,21 +11,22 @@ export class ConhecimentoService {
   async registrarSolucao(
     chamadoId: number,
     dto: RegistrarSolucaoDto,
+    tecnicoId: number,
   ): Promise<{ solucao: Solucao; artigo: ArtigoConhecimento | null }> {
     const chamado = await this.prisma.chamado.findUnique({ where: { id: chamadoId } });
     if (!chamado) throw new NotFoundException(`Chamado ${chamadoId} não encontrado`);
     if (chamado.status !== 'EM_ATENDIMENTO') {
       throw new BadRequestException('Só é possível registrar solução de chamado em atendimento');
     }
-    if (chamado.tecnicoId !== dto.tecnicoId) {
+    if (chamado.tecnicoId !== tecnicoId) {
       throw new BadRequestException('A solução precisa ser registrada pelo técnico atribuído');
     }
 
     return this.prisma.$transaction(async (tx) => {
       const solucao = await tx.solucao.upsert({
         where: { chamadoId },
-        update: { descricao: dto.descricao, tecnicoId: dto.tecnicoId },
-        create: { chamadoId, descricao: dto.descricao, tecnicoId: dto.tecnicoId },
+        update: { descricao: dto.descricao, tecnicoId },
+        create: { chamadoId, descricao: dto.descricao, tecnicoId },
       });
       await tx.chamado.update({
         where: { id: chamadoId },

@@ -7,6 +7,193 @@
   },
   "item": [
     {
+      "name": "RF02 — Login usuário",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "login"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"usuario@deskflow.dev\",\n  \"senha\": \"Senha@123\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+              "const r = pm.response.json();",
+              "pm.test(\"retorna JWT\", () => pm.expect(r.accessToken).to.be.a(\"string\"));",
+              "pm.collectionVariables.set(\"jwtUsuario\", r.accessToken);",
+              "pm.collectionVariables.set(\"solicitanteId\", r.usuario.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "RF02 — Login técnico",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "login"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"tecnico@deskflow.dev\",\n  \"senha\": \"Senha@123\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+              "const r = pm.response.json();",
+              "pm.test(\"retorna JWT\", () => pm.expect(r.accessToken).to.be.a(\"string\"));",
+              "pm.collectionVariables.set(\"jwtTecnico\", r.accessToken);",
+              "pm.collectionVariables.set(\"tecnicoId\", r.usuario.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "RF02 — Login gestor",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "login"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"gestor@deskflow.dev\",\n  \"senha\": \"Senha@123\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+              "const r = pm.response.json();",
+              "pm.test(\"retorna JWT\", () => pm.expect(r.accessToken).to.be.a(\"string\"));",
+              "pm.collectionVariables.set(\"jwtGestor\", r.accessToken);",
+              "pm.collectionVariables.set(\"gestorId\", r.usuario.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "RF02 — Login com senha errada",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "login"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"usuario@deskflow.dev\",\n  \"senha\": \"errada\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"status 401\", () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "RF02 — Sem login é bloqueado",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/chamados",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "chamados"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"status 401\", () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ]
+    },
+    {
       "name": "RF01 — Abrir chamado",
       "request": {
         "method": "POST",
@@ -14,6 +201,10 @@
           {
             "key": "Content-Type",
             "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwtUsuario}}"
           }
         ],
         "url": {
@@ -27,7 +218,7 @@
         },
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"titulo\": \"Impressora do 2º andar não imprime\",\n  \"descricao\": \"Desde hoje cedo a impressora mostra erro de papel atolado.\",\n  \"prioridade\": \"ALTA\",\n  \"solicitanteId\": {{solicitanteId}}\n}"
+          "raw": "{\n  \"titulo\": \"Impressora do 2º andar não imprime\",\n  \"descricao\": \"Desde hoje cedo a impressora mostra erro de papel atolado.\",\n  \"prioridade\": \"ALTA\"\n}"
         }
       },
       "event": [
@@ -54,6 +245,10 @@
           {
             "key": "Content-Type",
             "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwtUsuario}}"
           }
         ],
         "url": {
@@ -86,7 +281,12 @@
       "name": "RF01 — Listar chamados",
       "request": {
         "method": "GET",
-        "header": [],
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwtUsuario}}"
+          }
+        ],
         "url": {
           "raw": "{{baseUrl}}/chamados",
           "host": [
@@ -114,7 +314,12 @@
       "name": "RF01 — Consultar chamado",
       "request": {
         "method": "GET",
-        "header": [],
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwtUsuario}}"
+          }
+        ],
         "url": {
           "raw": "{{baseUrl}}/chamados/{{chamadoId}}",
           "host": [
@@ -147,6 +352,10 @@
           {
             "key": "Content-Type",
             "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwtGestor}}"
           }
         ],
         "url": {
@@ -188,6 +397,10 @@
           {
             "key": "Content-Type",
             "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwtGestor}}"
           }
         ],
         "url": {
@@ -226,6 +439,10 @@
           {
             "key": "Content-Type",
             "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwtTecnico}}"
           }
         ],
         "url": {
@@ -241,7 +458,7 @@
         },
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"descricao\": \"Removido o papel atolado e limpo o rolo de tração.\",\n  \"publicarNaBase\": true,\n  \"tituloArtigo\": \"Papel atolado na impressora\",\n  \"tecnicoId\": {{tecnicoId}}\n}"
+          "raw": "{\n  \"descricao\": \"Removido o papel atolado e limpo o rolo de tração.\",\n  \"publicarNaBase\": true,\n  \"tituloArtigo\": \"Papel atolado na impressora\"\n}"
         }
       },
       "event": [
@@ -263,7 +480,12 @@
       "name": "RF04 — Buscar na base de conhecimento",
       "request": {
         "method": "GET",
-        "header": [],
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwtUsuario}}"
+          }
+        ],
         "url": {
           "raw": "{{baseUrl}}/base-conhecimento?busca=atolado",
           "host": [
@@ -301,6 +523,10 @@
           {
             "key": "Content-Type",
             "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwtUsuario}}"
           }
         ],
         "url": {
@@ -336,7 +562,12 @@
       "name": "RF05 — Painel de atendimento",
       "request": {
         "method": "GET",
-        "header": [],
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwtGestor}}"
+          }
+        ],
         "url": {
           "raw": "{{baseUrl}}/relatorios/resumo",
           "host": [
@@ -362,6 +593,39 @@
           }
         }
       ]
+    },
+    {
+      "name": "RF02 — Usuário comum não acessa relatórios",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwtUsuario}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/relatorios/resumo",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "relatorios",
+            "resumo"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"status 403\", () => pm.response.to.have.status(403));"
+            ]
+          }
+        }
+      ]
     }
   ],
   "variable": [
@@ -374,12 +638,28 @@
       "value": ""
     },
     {
+      "key": "jwtUsuario",
+      "value": ""
+    },
+    {
+      "key": "jwtTecnico",
+      "value": ""
+    },
+    {
+      "key": "jwtGestor",
+      "value": ""
+    },
+    {
       "key": "solicitanteId",
-      "value": "1"
+      "value": ""
     },
     {
       "key": "tecnicoId",
-      "value": "2"
+      "value": ""
+    },
+    {
+      "key": "gestorId",
+      "value": ""
     }
   ]
 }

@@ -1,15 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsInt, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsBoolean, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class RegistrarSolucaoDto {
   @ApiProperty({ example: 'Removido o papel atolado e limpo o rolo de tração.' })
   @IsString()
   @MinLength(10)
   descricao!: string;
-
-  @ApiProperty({ example: 2, description: 'Técnico que resolveu (precisa ser o técnico atribuído)' })
-  @IsInt()
-  tecnicoId!: number;
 
   @ApiPropertyOptional({ default: false, description: 'Publicar a solução na base de conhecimento' })
   @IsOptional()

@@ -1,5 +1,49 @@
 openapi: 3.0.0
 paths:
+  /auth/login:
+    post:
+      operationId: AuthController_login
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginDto'
+      responses:
+        '200':
+          description: ''
+      summary: RF02 — Login (retorna token JWT)
+      tags:
+        - Autenticação
+  /auth/registrar:
+    post:
+      operationId: AuthController_registrar
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistrarDto'
+      responses:
+        '201':
+          description: ''
+      summary: RF02 — Autocadastro de usuário (perfil USUARIO)
+      tags:
+        - Autenticação
+  /auth/perfil:
+    get:
+      operationId: AuthController_perfil
+      parameters: []
+      responses:
+        '200':
+          description: ''
+      security:
+        - bearer: []
+      summary: RF02 — Dados do usuário logado
+      tags:
+        - Autenticação
   /chamados:
     post:
       operationId: ChamadosController_criar
@@ -13,6 +57,8 @@ paths:
       responses:
         '201':
           description: ''
+      security:
+        - bearer: []
       summary: RF01 — Abrir chamado
       tags:
         - Chamados
@@ -43,6 +89,8 @@ paths:
       responses:
         '200':
           description: ''
+      security:
+        - bearer: []
       summary: 'RF01 — Listar chamados (filtros: status, técnico, SLA vencido)'
       tags:
         - Chamados
@@ -58,6 +106,8 @@ paths:
       responses:
         '200':
           description: ''
+      security:
+        - bearer: []
       summary: RF01 — Consultar chamado
       tags:
         - Chamados
@@ -79,6 +129,8 @@ paths:
       responses:
         '200':
           description: ''
+      security:
+        - bearer: []
       summary: RF01 — Atualizar status do chamado
       tags:
         - Chamados
@@ -100,7 +152,9 @@ paths:
       responses:
         '200':
           description: ''
-      summary: RF03 — Atribuir técnico, prioridade e SLA
+      security:
+        - bearer: []
+      summary: RF03 — Atribuir técnico, prioridade e SLA (gestor ou técnico)
       tags:
         - Chamados
   /chamados/{id}/solucao:
@@ -121,7 +175,9 @@ paths:
       responses:
         '201':
           description: ''
-      summary: RF04 — Registrar solução e resolver o chamado
+      security:
+        - bearer: []
+      summary: RF04 — Registrar solução e resolver o chamado (técnico atribuído)
       tags:
         - Solução e Base de Conhecimento
   /base-conhecimento:
@@ -136,6 +192,8 @@ paths:
       responses:
         '200':
           description: ''
+      security:
+        - bearer: []
       summary: RF04 — Buscar artigos da base de conhecimento
       tags:
         - Solução e Base de Conhecimento
@@ -151,6 +209,8 @@ paths:
       responses:
         '200':
           description: ''
+      security:
+        - bearer: []
       summary: RF04 — Consultar artigo
       tags:
         - Solução e Base de Conhecimento
@@ -161,18 +221,54 @@ paths:
       responses:
         '200':
           description: ''
-      summary: RF05 — Painel de atendimento (status, técnicos e SLA)
+      security:
+        - bearer: []
+      summary: RF05 — Painel de atendimento (status, técnicos e SLA) — só GESTOR
       tags:
         - Relatórios
 info:
   title: DeskFlow API
   description: Central de Serviços de TI — Projeto Integrador de Gerência de Configuração (Fametro)
-  version: 0.2.0
+  version: 0.5.0
   contact: {}
 tags: []
 servers: []
 components:
+  securitySchemes:
+    bearer:
+      scheme: bearer
+      bearerFormat: JWT
+      type: http
   schemas:
+    LoginDto:
+      type: object
+      properties:
+        email:
+          type: string
+          example: usuario@deskflow.dev
+        senha:
+          type: string
+          example: Senha@123
+      required:
+        - email
+        - senha
+    RegistrarDto:
+      type: object
+      properties:
+        nome:
+          type: string
+          example: Maria Souza
+        email:
+          type: string
+          example: maria@empresa.com
+        senha:
+          type: string
+          example: Senha@123
+          description: Mínimo 8 caracteres, com letra e número (RNF02)
+      required:
+        - nome
+        - email
+        - senha
     CriarChamadoDto:
       type: object
       properties:
@@ -190,14 +286,9 @@ components:
             - ALTA
             - CRITICA
           default: MEDIA
-        solicitanteId:
-          type: number
-          example: 1
-          description: Usuário que abre o chamado
       required:
         - titulo
         - descricao
-        - solicitanteId
     AtualizarStatusDto:
       type: object
       properties:
@@ -234,10 +325,6 @@ components:
         descricao:
           type: string
           example: Removido o papel atolado e limpo o rolo de tração.
-        tecnicoId:
-          type: number
-          example: 2
-          description: Técnico que resolveu (precisa ser o técnico atribuído)
         publicarNaBase:
           type: boolean
           default: false
@@ -247,4 +334,3 @@ components:
           example: Como resolver papel atolado na impressora
       required:
         - descricao
-        - tecnicoId

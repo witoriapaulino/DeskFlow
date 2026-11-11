@@ -1,4 +1,5 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { UsuarioAutenticado } from '../auth/decorators';
 import { Chamado, Perfil, Prisma, StatusChamado } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AtribuirChamadoDto } from './dto/atribuir-chamado.dto';
@@ -16,9 +17,9 @@ export class ChamadosService {
     return { ...chamado, slaVencido: slaVencido(chamado.prazoSla, chamado.resolvidoEm) };
   }
 
-  /** RF01 — abrir chamado. */
-  async criar(dto: CriarChamadoDto): Promise<ChamadoComSla> {
-    const solicitante = await this.prisma.usuario.findUnique({ where: { id: dto.solicitanteId } });
+  /** RF01 — abrir chamado (o solicitante é o usuário logado — RF02). */
+  async criar(dto: CriarChamadoDto, solicitanteId: number): Promise<ChamadoComSla> {
+    const solicitante = await this.prisma.usuario.findUnique({ where: { id: solicitanteId } });
     if (!solicitante) throw new BadRequestException('Solicitante não encontrado');
     const prioridade = dto.prioridade ?? 'MEDIA';
     const agora = new Date();
@@ -27,7 +28,7 @@ export class ChamadosService {
         titulo: dto.titulo,
         descricao: dto.descricao,
         prioridade,
-        solicitanteId: dto.solicitanteId,
+        solicitanteId,
         criadoEm: agora,
         prazoSla: calcularPrazoSla(agora, prioridade),
       },
@@ -35,9 +36,10 @@ export class ChamadosService {
     return this.comSla(chamado);
   }
 
-  /** RF01 — listar chamados com filtros. */
-  async listar(filtro: FiltroChamadosDto): Promise<ChamadoComSla[]> {
+  /** RF01 — listar chamados com filtros. RF02: perfil USUARIO só vê os próprios chamados. */
+  async listar(filtro: FiltroChamadosDto, usuario?: UsuarioAutenticado): Promise<ChamadoComSla[]> {
     const where: Prisma.ChamadoWhereInput = {};
+    if (usuario?.perfil === 'USUARIO') where.solicitanteId = usuario.id;
     if (filtro.status) where.status = filtro.status;
     if (filtro.tecnicoId) where.tecnicoId = filtro.tecnicoId;
     if (filtro.slaVencido) {
@@ -48,16 +50,19 @@ export class ChamadosService {
     return chamados.map((c) => this.comSla(c));
   }
 
-  /** RF01 — consultar um chamado. */
-  async buscar(id: number): Promise<ChamadoComSla> {
+  /** RF01 — consultar um chamado. RF02: perfil USUARIO só consulta os próprios. */
+  async buscar(id: number, usuario?: UsuarioAutenticado): Promise<ChamadoComSla> {
     const chamado = await this.prisma.chamado.findUnique({ where: { id } });
     if (!chamado) throw new NotFoundException(`Chamado ${id} não encontrado`);
+    if (usuario?.perfil === 'USUARIO' && chamado.solicitanteId !== usuario.id) {
+      throw new ForbiddenException('Você só pode acessar os seus chamados');
+    }
     return this.comSla(chamado);
   }
 
   /** RF01 — atualizar status, respeitando as transições da RN05. */
-  async atualizarStatus(id: number, status: StatusChamado): Promise<ChamadoComSla> {
-    const atual = await this.buscar(id);
+  async atualizarStatus(id: number, status: StatusChamado, usuario?: UsuarioAutenticado): Promise<ChamadoComSla> {
+    const atual = await this.buscar(id, usuario);
     if (!transicaoPermitida(atual.status, status)) {
       throw new BadRequestException(`Transição inválida: ${atual.status} → ${status}`);
     }
