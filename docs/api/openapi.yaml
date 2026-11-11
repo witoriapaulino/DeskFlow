@@ -229,7 +229,7 @@ paths:
 info:
   title: DeskFlow API
   description: Central de Serviços de TI — Projeto Integrador de Gerência de Configuração (Fametro)
-  version: 0.5.0
+  version: 1.0.0
   contact: {}
 tags: []
 servers: []
