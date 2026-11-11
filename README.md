@@ -62,3 +62,27 @@ pcm/                  formulários do Processo de Controle de Mudanças
 ## Como contribuir
 
 Leia o [CONTRIBUTING.md](CONTRIBUTING.md): cada integrante trabalha na branch com o próprio nome, commita da própria conta e abre um Pull Request para a `main`.
+
+## Arquitetura
+
+![Arquitetura do DeskFlow](docs/arquitetura/DeskFlow_Arquitetura.png)
+
+Fonte editável (IC-DOC-07): `docs/arquitetura/DeskFlow_Arquitetura.drawio`. Abra em [app.diagrams.net](https://app.diagrams.net) ou na extensão Draw.io do VS Code. Se mudar o diagrama, exporte o PNG de novo e atualize a versão na Planilha de ICs.
+
+## Como rodar a API
+
+Pré-requisitos: Node.js 20+ e PostgreSQL 16 (local ou via Docker).
+
+```bash
+cp .env.example .env            # ajuste a DATABASE_URL
+npm install                     # também gera o Prisma Client
+npx prisma migrate deploy       # aplica as migrações de db/migrations/
+npm run db:seed                 # 3 usuários de demonstração (senha: Senha@123)
+npm run build && npm start      # API em http://localhost:3000 · documentação em /docs
+npm run openapi                 # atualiza docs/api/openapi.yaml
+```
+
+PostgreSQL com Docker:
+```bash
+docker run -d --name deskflow-db -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=deskflow -p 5432:5432 postgres:16
+```

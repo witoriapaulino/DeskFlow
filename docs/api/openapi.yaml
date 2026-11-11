@@ -1,0 +1,169 @@
+openapi: 3.0.0
+paths:
+  /chamados:
+    post:
+      operationId: ChamadosController_criar
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CriarChamadoDto'
+      responses:
+        '201':
+          description: ''
+      summary: RF01 — Abrir chamado
+      tags:
+        - Chamados
+    get:
+      operationId: ChamadosController_listar
+      parameters:
+        - name: status
+          required: false
+          in: query
+          schema:
+            type: string
+            enum:
+              - ABERTO
+              - EM_ATENDIMENTO
+              - RESOLVIDO
+              - FECHADO
+        - name: tecnicoId
+          required: false
+          in: query
+          schema:
+            type: number
+        - name: slaVencido
+          required: false
+          in: query
+          description: true = só chamados com SLA vencido
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: ''
+      summary: 'RF01 — Listar chamados (filtros: status, técnico, SLA vencido)'
+      tags:
+        - Chamados
+  /chamados/{id}:
+    get:
+      operationId: ChamadosController_buscar
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: number
+      responses:
+        '200':
+          description: ''
+      summary: RF01 — Consultar chamado
+      tags:
+        - Chamados
+  /chamados/{id}/status:
+    patch:
+      operationId: ChamadosController_atualizarStatus
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AtualizarStatusDto'
+      responses:
+        '200':
+          description: ''
+      summary: RF01 — Atualizar status do chamado
+      tags:
+        - Chamados
+  /chamados/{id}/atribuicao:
+    patch:
+      operationId: ChamadosController_atribuir
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AtribuirChamadoDto'
+      responses:
+        '200':
+          description: ''
+      summary: RF03 — Atribuir técnico, prioridade e SLA
+      tags:
+        - Chamados
+info:
+  title: DeskFlow API
+  description: Central de Serviços de TI — Projeto Integrador de Gerência de Configuração (Fametro)
+  version: 0.2.0
+  contact: {}
+tags: []
+servers: []
+components:
+  schemas:
+    CriarChamadoDto:
+      type: object
+      properties:
+        titulo:
+          type: string
+          example: Impressora do 2º andar não imprime
+        descricao:
+          type: string
+          example: Desde hoje cedo a impressora mostra erro de papel atolado.
+        prioridade:
+          type: string
+          enum:
+            - BAIXA
+            - MEDIA
+            - ALTA
+            - CRITICA
+          default: MEDIA
+        solicitanteId:
+          type: number
+          example: 1
+          description: Usuário que abre o chamado
+      required:
+        - titulo
+        - descricao
+        - solicitanteId
+    AtualizarStatusDto:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - ABERTO
+            - EM_ATENDIMENTO
+            - RESOLVIDO
+            - FECHADO
+          example: FECHADO
+      required:
+        - status
+    AtribuirChamadoDto:
+      type: object
+      properties:
+        tecnicoId:
+          type: number
+          example: 2
+          description: Técnico responsável
+        prioridade:
+          type: string
+          enum:
+            - BAIXA
+            - MEDIA
+            - ALTA
+            - CRITICA
+          description: Se informada, recalcula o prazo de SLA
+      required:
+        - tecnicoId
