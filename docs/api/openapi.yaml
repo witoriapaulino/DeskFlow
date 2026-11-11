@@ -1,0 +1,250 @@
+openapi: 3.0.0
+paths:
+  /chamados:
+    post:
+      operationId: ChamadosController_criar
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CriarChamadoDto'
+      responses:
+        '201':
+          description: ''
+      summary: RF01 — Abrir chamado
+      tags:
+        - Chamados
+    get:
+      operationId: ChamadosController_listar
+      parameters:
+        - name: status
+          required: false
+          in: query
+          schema:
+            type: string
+            enum:
+              - ABERTO
+              - EM_ATENDIMENTO
+              - RESOLVIDO
+              - FECHADO
+        - name: tecnicoId
+          required: false
+          in: query
+          schema:
+            type: number
+        - name: slaVencido
+          required: false
+          in: query
+          description: true = só chamados com SLA vencido
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: ''
+      summary: 'RF01 — Listar chamados (filtros: status, técnico, SLA vencido)'
+      tags:
+        - Chamados
+  /chamados/{id}:
+    get:
+      operationId: ChamadosController_buscar
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: number
+      responses:
+        '200':
+          description: ''
+      summary: RF01 — Consultar chamado
+      tags:
+        - Chamados
+  /chamados/{id}/status:
+    patch:
+      operationId: ChamadosController_atualizarStatus
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AtualizarStatusDto'
+      responses:
+        '200':
+          description: ''
+      summary: RF01 — Atualizar status do chamado
+      tags:
+        - Chamados
+  /chamados/{id}/atribuicao:
+    patch:
+      operationId: ChamadosController_atribuir
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AtribuirChamadoDto'
+      responses:
+        '200':
+          description: ''
+      summary: RF03 — Atribuir técnico, prioridade e SLA
+      tags:
+        - Chamados
+  /chamados/{id}/solucao:
+    post:
+      operationId: ConhecimentoController_registrarSolucao
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistrarSolucaoDto'
+      responses:
+        '201':
+          description: ''
+      summary: RF04 — Registrar solução e resolver o chamado
+      tags:
+        - Solução e Base de Conhecimento
+  /base-conhecimento:
+    get:
+      operationId: ConhecimentoController_buscarArtigos
+      parameters:
+        - name: busca
+          required: false
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+      summary: RF04 — Buscar artigos da base de conhecimento
+      tags:
+        - Solução e Base de Conhecimento
+  /base-conhecimento/{id}:
+    get:
+      operationId: ConhecimentoController_buscarArtigo
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: number
+      responses:
+        '200':
+          description: ''
+      summary: RF04 — Consultar artigo
+      tags:
+        - Solução e Base de Conhecimento
+  /relatorios/resumo:
+    get:
+      operationId: RelatoriosController_resumo
+      parameters: []
+      responses:
+        '200':
+          description: ''
+      summary: RF05 — Painel de atendimento (status, técnicos e SLA)
+      tags:
+        - Relatórios
+info:
+  title: DeskFlow API
+  description: Central de Serviços de TI — Projeto Integrador de Gerência de Configuração (Fametro)
+  version: 0.2.0
+  contact: {}
+tags: []
+servers: []
+components:
+  schemas:
+    CriarChamadoDto:
+      type: object
+      properties:
+        titulo:
+          type: string
+          example: Impressora do 2º andar não imprime
+        descricao:
+          type: string
+          example: Desde hoje cedo a impressora mostra erro de papel atolado.
+        prioridade:
+          type: string
+          enum:
+            - BAIXA
+            - MEDIA
+            - ALTA
+            - CRITICA
+          default: MEDIA
+        solicitanteId:
+          type: number
+          example: 1
+          description: Usuário que abre o chamado
+      required:
+        - titulo
+        - descricao
+        - solicitanteId
+    AtualizarStatusDto:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - ABERTO
+            - EM_ATENDIMENTO
+            - RESOLVIDO
+            - FECHADO
+          example: FECHADO
+      required:
+        - status
+    AtribuirChamadoDto:
+      type: object
+      properties:
+        tecnicoId:
+          type: number
+          example: 2
+          description: Técnico responsável
+        prioridade:
+          type: string
+          enum:
+            - BAIXA
+            - MEDIA
+            - ALTA
+            - CRITICA
+          description: Se informada, recalcula o prazo de SLA
+      required:
+        - tecnicoId
+    RegistrarSolucaoDto:
+      type: object
+      properties:
+        descricao:
+          type: string
+          example: Removido o papel atolado e limpo o rolo de tração.
+        tecnicoId:
+          type: number
+          example: 2
+          description: Técnico que resolveu (precisa ser o técnico atribuído)
+        publicarNaBase:
+          type: boolean
+          default: false
+          description: Publicar a solução na base de conhecimento
+        tituloArtigo:
+          type: string
+          example: Como resolver papel atolado na impressora
+      required:
+        - descricao
+        - tecnicoId

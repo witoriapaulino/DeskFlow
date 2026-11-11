@@ -1,0 +1,94 @@
+// DeskFlow — modelo de dados (IC-DB-02)
+// Migrações geradas em db/migrations/ (IC-DB-01)
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "cjs"
+  importFileExtension = ""
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Perfil {
+  USUARIO
+  TECNICO
+  GESTOR
+}
+
+enum StatusChamado {
+  ABERTO
+  EM_ATENDIMENTO
+  RESOLVIDO
+  FECHADO
+}
+
+enum Prioridade {
+  BAIXA
+  MEDIA
+  ALTA
+  CRITICA
+}
+
+model Usuario {
+  id                 Int      @id @default(autoincrement())
+  nome               String   @db.VarChar(120)
+  email              String   @unique @db.VarChar(160)
+  senhaHash          String   @map("senha_hash")
+  perfil             Perfil   @default(USUARIO)
+  criadoEm           DateTime @default(now()) @map("criado_em")
+  chamadosAbertos    Chamado[] @relation("Solicitante")
+  chamadosAtribuidos Chamado[] @relation("Tecnico")
+  solucoes           Solucao[]
+
+  @@map("usuarios")
+}
+
+model Chamado {
+  id            Int           @id @default(autoincrement())
+  titulo        String        @db.VarChar(150)
+  descricao     String
+  status        StatusChamado @default(ABERTO)
+  prioridade    Prioridade    @default(MEDIA)
+  solicitanteId Int           @map("solicitante_id")
+  tecnicoId     Int?          @map("tecnico_id")
+  prazoSla      DateTime      @map("prazo_sla")
+  criadoEm      DateTime      @default(now()) @map("criado_em")
+  atualizadoEm  DateTime      @updatedAt @map("atualizado_em")
+  resolvidoEm   DateTime?     @map("resolvido_em")
+  solicitante   Usuario       @relation("Solicitante", fields: [solicitanteId], references: [id])
+  tecnico       Usuario?      @relation("Tecnico", fields: [tecnicoId], references: [id])
+  solucao       Solucao?
+  artigos       ArtigoConhecimento[]
+
+  @@index([status])
+  @@index([tecnicoId])
+  @@map("chamados")
+}
+
+// RF04 — solução registrada pelo técnico (1 por chamado)
+model Solucao {
+  id        Int      @id @default(autoincrement())
+  chamadoId Int      @unique @map("chamado_id")
+  descricao String
+  tecnicoId Int      @map("tecnico_id")
+  criadoEm  DateTime @default(now()) @map("criado_em")
+  chamado   Chamado  @relation(fields: [chamadoId], references: [id])
+  tecnico   Usuario  @relation(fields: [tecnicoId], references: [id])
+
+  @@map("solucoes")
+}
+
+// RF04 — base de conhecimento alimentada pelas soluções
+model ArtigoConhecimento {
+  id              Int      @id @default(autoincrement())
+  titulo          String   @db.VarChar(150)
+  conteudo        String
+  chamadoOrigemId Int?     @map("chamado_origem_id")
+  criadoEm        DateTime @default(now()) @map("criado_em")
+  chamadoOrigem   Chamado? @relation(fields: [chamadoOrigemId], references: [id])
+
+  @@map("artigos_conhecimento")
+}
