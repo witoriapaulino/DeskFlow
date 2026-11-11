@@ -1,0 +1,385 @@
+{
+  "info": {
+    "_postman_id": "d8813aa7-e351-57f1-b5d9-3bbf25ede8ef",
+    "name": "DeskFlow API",
+    "description": "IC-API-02 — Coleção do DeskFlow. Roda em ordem (fluxo completo de um chamado) e serve de teste E2E no Newman. Requer banco com o seed (npm run db:seed).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "RF01 — Abrir chamado",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/chamados",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "chamados"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"titulo\": \"Impressora do 2º andar não imprime\",\n  \"descricao\": \"Desde hoje cedo a impressora mostra erro de papel atolado.\",\n  \"prioridade\": \"ALTA\",\n  \"solicitanteId\": {{solicitanteId}}\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"status 201\", () => pm.response.to.have.status(201));",
+              "const c = pm.response.json();",
+              "pm.test(\"nasce ABERTO\", () => pm.expect(c.status).to.eql(\"ABERTO\"));",
+              "pm.test(\"tem prazo de SLA\", () => pm.expect(c.prazoSla).to.be.a(\"string\"));",
+              "pm.collectionVariables.set(\"chamadoId\", c.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "RF01 — Abrir chamado inválido",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/chamados",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "chamados"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"titulo\": \"x\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"status 400\", () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "RF01 — Listar chamados",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/chamados",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "chamados"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+              "pm.test(\"é uma lista\", () => pm.expect(pm.response.json()).to.be.an(\"array\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "RF01 — Consultar chamado",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/chamados/{{chamadoId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "chamados",
+            "{{chamadoId}}"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+              "pm.test(\"id correto\", () => pm.expect(pm.response.json().id).to.eql(Number(pm.collectionVariables.get(\"chamadoId\"))));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "RF03 — Atribuir técnico e prioridade",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/chamados/{{chamadoId}}/atribuicao",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "chamados",
+            "{{chamadoId}}",
+            "atribuicao"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tecnicoId\": {{tecnicoId}},\n  \"prioridade\": \"CRITICA\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+              "const c = pm.response.json();",
+              "pm.test(\"em atendimento\", () => pm.expect(c.status).to.eql(\"EM_ATENDIMENTO\"));",
+              "pm.test(\"prioridade crítica\", () => pm.expect(c.prioridade).to.eql(\"CRITICA\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "RF01 — Transição de status inválida",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/chamados/{{chamadoId}}/status",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "chamados",
+            "{{chamadoId}}",
+            "status"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"FECHADO\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"status 400\", () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "RF04 — Registrar solução",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/chamados/{{chamadoId}}/solucao",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "chamados",
+            "{{chamadoId}}",
+            "solucao"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"descricao\": \"Removido o papel atolado e limpo o rolo de tração.\",\n  \"publicarNaBase\": true,\n  \"tituloArtigo\": \"Papel atolado na impressora\",\n  \"tecnicoId\": {{tecnicoId}}\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"status 201\", () => pm.response.to.have.status(201));",
+              "const r = pm.response.json();",
+              "pm.test(\"solução gravada\", () => pm.expect(r.solucao.id).to.be.a(\"number\"));",
+              "pm.test(\"artigo publicado\", () => pm.expect(r.artigo.titulo).to.eql(\"Papel atolado na impressora\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "RF04 — Buscar na base de conhecimento",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/base-conhecimento?busca=atolado",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "base-conhecimento"
+          ],
+          "query": [
+            {
+              "key": "busca",
+              "value": "atolado"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+              "pm.test(\"encontra o artigo\", () => pm.expect(pm.response.json().length).to.be.above(0));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "RF01 — Fechar chamado",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/chamados/{{chamadoId}}/status",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "chamados",
+            "{{chamadoId}}",
+            "status"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"FECHADO\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+              "pm.test(\"fechado\", () => pm.expect(pm.response.json().status).to.eql(\"FECHADO\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "RF05 — Painel de atendimento",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/relatorios/resumo",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "relatorios",
+            "resumo"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+              "const r = pm.response.json();",
+              "pm.test(\"conta chamados\", () => pm.expect(r.total).to.be.above(0));",
+              "pm.test(\"tem indicador de SLA\", () => pm.expect(r.sla).to.have.property(\"percentualNoPrazo\"));"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "chamadoId",
+      "value": ""
+    },
+    {
+      "key": "solicitanteId",
+      "value": "1"
+    },
+    {
+      "key": "tecnicoId",
+      "value": "2"
+    }
+  ]
+}

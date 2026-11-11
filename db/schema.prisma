@@ -41,6 +41,7 @@ model Usuario {
   criadoEm           DateTime @default(now()) @map("criado_em")
   chamadosAbertos    Chamado[] @relation("Solicitante")
   chamadosAtribuidos Chamado[] @relation("Tecnico")
+  solucoes           Solucao[]
 
   @@map("usuarios")
 }
@@ -59,8 +60,35 @@ model Chamado {
   resolvidoEm   DateTime?     @map("resolvido_em")
   solicitante   Usuario       @relation("Solicitante", fields: [solicitanteId], references: [id])
   tecnico       Usuario?      @relation("Tecnico", fields: [tecnicoId], references: [id])
+  solucao       Solucao?
+  artigos       ArtigoConhecimento[]
 
   @@index([status])
   @@index([tecnicoId])
   @@map("chamados")
+}
+
+// RF04 — solução registrada pelo técnico (1 por chamado)
+model Solucao {
+  id        Int      @id @default(autoincrement())
+  chamadoId Int      @unique @map("chamado_id")
+  descricao String
+  tecnicoId Int      @map("tecnico_id")
+  criadoEm  DateTime @default(now()) @map("criado_em")
+  chamado   Chamado  @relation(fields: [chamadoId], references: [id])
+  tecnico   Usuario  @relation(fields: [tecnicoId], references: [id])
+
+  @@map("solucoes")
+}
+
+// RF04 — base de conhecimento alimentada pelas soluções
+model ArtigoConhecimento {
+  id              Int      @id @default(autoincrement())
+  titulo          String   @db.VarChar(150)
+  conteudo        String
+  chamadoOrigemId Int?     @map("chamado_origem_id")
+  criadoEm        DateTime @default(now()) @map("criado_em")
+  chamadoOrigem   Chamado? @relation(fields: [chamadoOrigemId], references: [id])
+
+  @@map("artigos_conhecimento")
 }
